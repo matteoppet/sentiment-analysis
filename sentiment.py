@@ -46,3 +46,52 @@ Additional tips:
 
 IMPORTANT: Give credit to the author of dataset (Chaithanya Kumar A Twitter and Reddit dataset)
 """
+import numpy
+import nltk
+import sys
+import os
+import csv
+
+
+def main():
+    if len(sys.argv) != 2:
+        sys.exit("Usage: python sentiment.py data/file")
+    
+    try:
+        dir, file = sys.argv[1].split("/")
+    except ValueError:
+        sys.exit("Usage: python sentiment.py data/file")
+
+    comments, label = load_data(dir, file)
+    print("\rLoad data completed")
+
+
+def load_data(data, file_to_load):
+    """
+    Load the data from the directory data
+    
+    DATA ALREADY CLEANED
+    """
+    if os.path.exists(f"{data}/{file_to_load}"):
+        print("Load data...", end="", flush=True)
+
+        if file_to_load == "Reddit_Data.csv": 
+            first_category = "clean_comment"
+        else: 
+            first_category = "clean_text"
+       
+        comments = ()
+        label = ()
+        with open(f"{data}/{file_to_load}") as csvfile:
+            reader = csv.DictReader(csvfile)
+
+            for row in reader:
+                comments = comments + (row[first_category],)
+                label = label + (row["category"],)
+
+
+            return (comments, label)
+    else:
+        sys.exit("No such file or directory, check the path or the file name")
+
+main() 
