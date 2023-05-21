@@ -46,11 +46,12 @@ Additional tips:
 
 IMPORTANT: Give credit to the author of dataset (Chaithanya Kumar A Twitter and Reddit dataset)
 """
-import numpy
+import numpy as np
 import nltk
 import sys
 import os
 import csv
+import time
 
 
 def main():
@@ -62,9 +63,17 @@ def main():
     except ValueError:
         sys.exit("Usage: python sentiment.py data/file")
 
+    # Load data section
+    start_time_load = time.time()
     comments, label = load_data(dir, file)
-    print("\rLoad data completed")
+    end_time_load = time.time()
+    print(f"\rLoad data completed, runtime: {end_time_load - start_time_load}")
 
+    # Feature extraction section
+    start_time_bow = time.time()    
+    bow = bag_of_word(comments)
+    end_time_bow = time.time()
+    print(f"\rFeature processing ended, runtime: {end_time_bow - start_time_bow}")
 
 def load_data(data, file_to_load):
     """
@@ -77,9 +86,9 @@ def load_data(data, file_to_load):
 
         if file_to_load == "Reddit_Data.csv": 
             first_category = "clean_comment"
-        else: 
-            first_category = "clean_text"
-       
+        else:
+            first_category = "review"
+    
         comments = ()
         label = ()
         with open(f"{data}/{file_to_load}") as csvfile:
@@ -87,11 +96,38 @@ def load_data(data, file_to_load):
 
             for row in reader:
                 comments = comments + (row[first_category],)
-                label = label + (row["category"],)
-
+                label = label + (row["polarity"],)
 
             return (comments, label)
     else:
         sys.exit("No such file or directory, check the path or the file name")
 
-main() 
+# TODO: Adjust load data category
+
+def bag_of_word(comments):
+    print("Feature processing started...", end="", flush=True)
+    vocabulary = set()
+    for comment in comments:
+        words = comment.split(" ")
+        vocabulary.update(words)
+    
+    vocabulary = sorted(vocabulary)
+
+    feature_matrix = []
+    for document in comments:
+        words = document.split(" ")
+        document_vector = [0] * len(vocabulary)
+        
+        for word in words:
+            if word in vocabulary:
+                word_index = vocabulary.index(word)
+                document_vector[word_index] += 1
+
+        feature_matrix.append(document_vector)
+    
+    feature_matrix = np.array(feature_matrix)
+    return feature_matrix
+
+
+if __name__ == "__main__":
+    main() 
