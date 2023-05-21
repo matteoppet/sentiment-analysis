@@ -47,7 +47,6 @@ Additional tips:
 IMPORTANT: Give credit to the author of dataset (Chaithanya Kumar A Twitter and Reddit dataset)
 """
 import numpy as np
-import nltk
 import sys
 import os
 import csv
@@ -71,7 +70,7 @@ def main():
 
     # Feature extraction section
     start_time_bow = time.time()    
-    bow = bag_of_word(comments)
+    bow = bag_of_words(comments)
     end_time_bow = time.time()
     print(f"\rFeature processing ended, runtime: {end_time_bow - start_time_bow}")
 
@@ -80,22 +79,18 @@ def load_data(data, file_to_load):
     Load the data from the directory data
     
     DATA ALREADY CLEANED
+    DATA USED: EcoPrepocessed.csv (eco review on amazon)    
     """
     if os.path.exists(f"{data}/{file_to_load}"):
         print("Load data...", end="", flush=True)
 
-        if file_to_load == "Reddit_Data.csv": 
-            first_category = "clean_comment"
-        else:
-            first_category = "review"
-    
         comments = ()
         label = ()
         with open(f"{data}/{file_to_load}") as csvfile:
             reader = csv.DictReader(csvfile)
 
             for row in reader:
-                comments = comments + (row[first_category],)
+                comments = comments + (row["review"],)
                 label = label + (row["polarity"],)
 
             return (comments, label)
@@ -104,8 +99,13 @@ def load_data(data, file_to_load):
 
 # TODO: Adjust load data category
 
-def bag_of_word(comments):
+def bag_of_words(comments):
+    """
+    Algorithm used for feature extraction of comments
+    Algorithm used: BoW (Bag of Words)
+    """
     print("Feature processing started...", end="", flush=True)
+    
     vocabulary = set()
     for comment in comments:
         words = comment.split(" ")
