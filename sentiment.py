@@ -51,7 +51,22 @@ import sys
 import os
 import csv
 import time
+import nltk
+from sklearn.model_selection import train_test_split
+import random
 
+# Algorithms
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import accuracy_score
+
+# Naive bayes
+from sklearn.naive_bayes import MultinomialNB
+# SVC
+from sklearn.svm import SVC
+# Logistic regression
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import LabelEncoder
 
 def main():
     if len(sys.argv) != 2:
@@ -64,15 +79,30 @@ def main():
 
     # Load data section
     start_time_load = time.time()
-    comments, label = load_data(dir, file)
+    comments, labels = load_data(dir, file)
     end_time_load = time.time()
-    print(f"\rLoad data completed, runtime: {end_time_load - start_time_load}")
+    print(f"\rLoad data > OK, runtime: {end_time_load - start_time_load}")
 
     # Feature extraction section
     start_time_bow = time.time()    
     bow = bag_of_words(comments)
     end_time_bow = time.time()
-    print(f"\rFeature processing ended, runtime: {end_time_bow - start_time_bow}")
+    print(f"\rFeature processing > OK, runtime: {end_time_bow - start_time_bow}")
+
+    # Splitting data
+    data = pd.read_csv('data/EcoPreprocessed.csv')
+    label_encoder = LabelEncoder()
+    data["division"] = label_encoder.fit_transform(data["division"])
+
+    train_X, test_X, train_y, test_y = train_test_split(data["review"], data["division"], test_size=0.2, random_state=42)
+
+    # Better algorithm LR=80% accuracy
+    start_time_lr = time.time()    
+    lr = logistic_regression(train_X, train_y, test_X, test_y)
+    end_time_lr = time.time()
+    print(f"\rAlgorithm processing > OK, runtime: {end_time_lr - start_time_lr}")
+    print("\n Logistic regression:", lr)
+
 
 def load_data(data, file_to_load):
     """
@@ -82,7 +112,7 @@ def load_data(data, file_to_load):
     DATA USED: EcoPrepocessed.csv (eco review on amazon)    
     """
     if os.path.exists(f"{data}/{file_to_load}"):
-        print("Load data...", end="", flush=True)
+        print("Load data > Loading...", end="", flush=True)
 
         comments = ()
         label = ()
@@ -97,15 +127,14 @@ def load_data(data, file_to_load):
     else:
         sys.exit("No such file or directory, check the path or the file name")
 
-# TODO: Adjust load data category
 
 def bag_of_words(comments):
     """
     Algorithm used for feature extraction of comments
     Algorithm used: BoW (Bag of Words)
     """
-    print("Feature processing started...", end="", flush=True)
-    
+    print("Feature processing > Loading...", end="", flush=True)
+
     vocabulary = set()
     for comment in comments:
         words = comment.split(" ")
@@ -128,6 +157,45 @@ def bag_of_words(comments):
     feature_matrix = np.array(feature_matrix)
     return feature_matrix
 
+
+def naive_bayes(train_X, train_y, test_X, test_y):
+    print("Naive bayes > Loading...", end="", flush=True)
+    classifier = MultinomialNB()
+    classifier.fit(train_X, train_y)
+
+    # Make prediction on the test set
+    predictions = classifier.predict(test_X)
+
+    # Calculate accuracy of the classifier
+    accuracy = accuracy_score(test_y, predictions)
+    return "Accuracy:", accuracy
+
+
+def SVM(train_X, train_y, test_X, test_y):
+    print("SVM > Loading...", end="", flush=True)
+    classifier = SVC(kernel='sigmoid')
+    classifier.fit(train_X, train_y)
+
+    # Make predictions
+    predictions = classifier.predict(test_X)
+
+    # Calculate accuracy of the classifier
+    accuracy = accuracy_score(test_y, predictions)
+    return "Accuracy:", accuracy
+
+
+def logistic_regression(train_X, train_y, test_X, test_y):
+    vectorizer = TfidfVectorizer()
+    train_x_vec = vectorizer.fit_transform(train_X)
+    test_x_vec = vectorizer.transform(test_X)
+
+    model = LogisticRegression()
+    model.fit(train_x_vec, train_y)
+
+    y_pred = model.predict(test_x_vec)
+
+    accuracy = accuracy_score(test_y, y_pred)
+    return "Accuracy:", accuracy
 
 if __name__ == "__main__":
     main() 
