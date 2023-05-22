@@ -51,9 +51,7 @@ import sys
 import os
 import csv
 import time
-import nltk
 from sklearn.model_selection import train_test_split
-import random
 
 # Algorithms
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -67,6 +65,8 @@ from sklearn.svm import SVC
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import LabelEncoder
+
+
 
 def main():
     if len(sys.argv) != 2:
