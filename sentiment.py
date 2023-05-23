@@ -200,18 +200,5 @@ def bag_of_words(comments, vocabulary):
     return feature_matrix
 
 
-def naive_bayes(train_X, train_y, test_X, test_y):
-    print("Naive bayes > Loading...", end="", flush=True)
-    classifier = MultinomialNB()
-    classifier.fit(train_X, train_y)
-
-    # Make prediction on the test set
-    predictions = classifier.predict(test_X)
-
-    # Calculate accuracy of the classifier
-    accuracy = accuracy_score(test_y, predictions)
-    return "Accuracy:", accuracy
-
-
 if __name__ == "__main__":
     main() 
