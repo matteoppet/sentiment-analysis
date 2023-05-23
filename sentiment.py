@@ -51,21 +51,68 @@ import sys
 import os
 import csv
 import time
-from sklearn.model_selection import train_test_split
 
 # Algorithms
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 
 # Naive bayes
 from sklearn.naive_bayes import MultinomialNB
 # SVC
 from sklearn.svm import SVC
 # Logistic regression
-import pandas as pd
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import LabelEncoder
 
+
+class Algorithms:
+    def __init__(self, comments, labels, vocabulary):
+        print("\rAlgorithm process > Loading...")
+
+        self.comments = comments
+        self.labels = labels
+        self.vocabulary = vocabulary
+
+        # Split data
+        label_encoder = LabelEncoder()
+        self.labels = label_encoder.fit_transform(labels)
+        self.train_X, self.test_X, self.train_y, self.test_y = train_test_split(self.comments, self.labels, test_size=0.2, random_state=42)
+
+    def naive_bayes(self):        
+        classifier = MultinomialNB()
+        classifier.fit(self.train_X, self.train_y)
+
+        # Make prediction on the test set
+        predictions = classifier.predict(self.test_X)
+
+        # Calculate accuracy of the classifier
+        accuracy = accuracy_score(self.test_y, predictions)
+        return (accuracy, "Naive Bayes")
+
+    def SVM(self):        
+        train_x_vec = bag_of_words(self.train_X, self.vocabulary)
+        test_x_vec = bag_of_words(self.test_X, self.vocabulary)
+        
+        classifier = SVC(kernel='sigmoid')
+        classifier.fit(train_x_vec, self.train_y)
+
+        predictions = classifier.predict(test_x_vec)
+
+        accuracy = accuracy_score(self.test_y, predictions)
+        return (accuracy, "Support Vectors Machine")
+
+    def logistic_regression(self):
+        train_x_vec = bag_of_words(self.train_X, self.vocabulary)
+        test_x_vec = bag_of_words(self.test_X, self.vocabulary)
+
+        model = LogisticRegression()
+        model.fit(train_x_vec, self.train_y)
+
+        y_pred = model.predict(test_x_vec)
+
+        accuracy = accuracy_score(self.test_y, y_pred)
+        return (accuracy, "Logistic Regression")
 
 
 def main():
@@ -83,25 +130,26 @@ def main():
     end_time_load = time.time()
     print(f"\rLoad data > OK, runtime: {end_time_load - start_time_load}")
 
-    # Feature extraction section
-    start_time_bow = time.time()    
-    bow = bag_of_words(comments)
-    end_time_bow = time.time()
-    print(f"\rFeature processing > OK, runtime: {end_time_bow - start_time_bow}")
+    # Create a vocabulary
+    vocabulary = set()
+    for comment in comments:
+        words = comment.split(" ")
+        vocabulary.update(words)
+    vocabulary = sorted(vocabulary)
+    
+    # Algorithm sections
+    start_time_alg = time.time()
+    
+    algorithms = Algorithms(comments, labels, vocabulary)
+    algorithm_accuracy, label = algorithms.SVM()
 
-    # Splitting data
-    data = pd.read_csv('data/EcoPreprocessed.csv')
-    label_encoder = LabelEncoder()
-    data["division"] = label_encoder.fit_transform(data["division"])
-
-    train_X, test_X, train_y, test_y = train_test_split(data["review"], data["division"], test_size=0.2, random_state=42)
-
-    # Better algorithm LR=80% accuracy
-    start_time_lr = time.time()    
-    lr = logistic_regression(train_X, train_y, test_X, test_y)
-    end_time_lr = time.time()
-    print(f"\rAlgorithm processing > OK, runtime: {end_time_lr - start_time_lr}")
-    print("\n Logistic regression:", lr)
+    end_time_alg = time.time()
+    # Move on line up the cursor
+    sys.stdout.write("\033[F")
+    print(f"\rAlgorithm process > OK, runtime: {end_time_alg - start_time_alg}")
+    # Clean the line
+    sys.stdout.write("\033[K")
+    print(f"\n {label}: {algorithm_accuracy}")
 
 
 def load_data(data, file_to_load):
@@ -121,26 +169,20 @@ def load_data(data, file_to_load):
 
             for row in reader:
                 comments = comments + (row["review"],)
-                label = label + (row["polarity"],)
+                label = label + (row["division"],)
 
             return (comments, label)
     else:
         sys.exit("No such file or directory, check the path or the file name")
 
 
-def bag_of_words(comments):
+def bag_of_words(comments, vocabulary):
     """
     Algorithm used for feature extraction of comments
     Algorithm used: BoW (Bag of Words)
     """
-    print("Feature processing > Loading...", end="", flush=True)
-
-    vocabulary = set()
-    for comment in comments:
-        words = comment.split(" ")
-        vocabulary.update(words)
-    
-    vocabulary = sorted(vocabulary)
+    print("\r  Feature processing > Loading...", end="", flush=True)
+    vocabulary = vocabulary
 
     feature_matrix = []
     for document in comments:
@@ -170,32 +212,6 @@ def naive_bayes(train_X, train_y, test_X, test_y):
     accuracy = accuracy_score(test_y, predictions)
     return "Accuracy:", accuracy
 
-
-def SVM(train_X, train_y, test_X, test_y):
-    print("SVM > Loading...", end="", flush=True)
-    classifier = SVC(kernel='sigmoid')
-    classifier.fit(train_X, train_y)
-
-    # Make predictions
-    predictions = classifier.predict(test_X)
-
-    # Calculate accuracy of the classifier
-    accuracy = accuracy_score(test_y, predictions)
-    return "Accuracy:", accuracy
-
-
-def logistic_regression(train_X, train_y, test_X, test_y):
-    vectorizer = TfidfVectorizer()
-    train_x_vec = vectorizer.fit_transform(train_X)
-    test_x_vec = vectorizer.transform(test_X)
-
-    model = LogisticRegression()
-    model.fit(train_x_vec, train_y)
-
-    y_pred = model.predict(test_x_vec)
-
-    accuracy = accuracy_score(test_y, y_pred)
-    return "Accuracy:", accuracy
 
 if __name__ == "__main__":
     main() 
