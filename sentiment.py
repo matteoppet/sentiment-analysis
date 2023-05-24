@@ -53,7 +53,6 @@ import csv
 import time
 
 # Algorithms
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
@@ -106,7 +105,7 @@ class Algorithms:
         train_x_vec = bag_of_words(self.train_X, self.vocabulary)
         test_x_vec = bag_of_words(self.test_X, self.vocabulary)
 
-        model = LogisticRegression()
+        model = LogisticRegression(solver='liblinear')
         model.fit(train_x_vec, self.train_y)
 
         y_pred = model.predict(test_x_vec)
@@ -141,7 +140,7 @@ def main():
     start_time_alg = time.time()
     
     algorithms = Algorithms(comments, labels, vocabulary)
-    algorithm_accuracy, label = algorithms.SVM()
+    algorithm_accuracy, label = algorithms.logistic_regression()
 
     end_time_alg = time.time()
     # Move on line up the cursor
@@ -170,6 +169,7 @@ def load_data(data, file_to_load):
             for row in reader:
                 comments = comments + (row["review"],)
                 label = label + (row["division"],)
+
 
             return (comments, label)
     else:
