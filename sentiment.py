@@ -65,9 +65,6 @@ from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 
 
-# TODO: Fix Naive Bayes load data
-
-
 class Algorithms:
     def __init__(self, comments, labels, vocabulary):
         print("\rAlgorithm process > Loading...")
