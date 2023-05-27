@@ -65,6 +65,9 @@ from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 
 
+# TODO: Fix Naive Bayes load data
+
+
 class Algorithms:
     def __init__(self, comments, labels, vocabulary):
         print("\rAlgorithm process > Loading...")
@@ -114,6 +117,30 @@ class Algorithms:
         return (accuracy, "Logistic Regression")
 
 
+class UserInterface:
+    def __init__(self, user_input, vocabulary, comments, labels, algorithm_to_use):
+        self.user_input = user_input 
+        self.vocabulary = vocabulary
+        self.comments = comments
+        self.labels = labels
+        self.algorithm_to_use = algorithm_to_use
+
+    def prediction(self):
+        preprocessed_input = bag_of_words([self.user_input], self.vocabulary)
+
+        # Predict sentiment
+        if self.algorithm_to_use == 1:
+            model = MultinomialNB
+        elif self.algorithm_to_use == 2:
+            model = SVC(kernel='sigmoid')
+        else:
+            model = LogisticRegression(solver='liblinear')
+
+        model.fit(bag_of_words(self.comments, self.vocabulary), self.labels)
+        prediction = model.predict(preprocessed_input)
+
+        return prediction[0]
+
 def main():
     if len(sys.argv) != 2:
         sys.exit("Usage: python sentiment.py data/file")
@@ -122,6 +149,8 @@ def main():
         dir, file = sys.argv[1].split("/")
     except ValueError:
         sys.exit("Usage: python sentiment.py data/file")
+
+    algorithm_to_use = int(input("1) Naive bayes\n2) Support Vectore Machine\n3) Logistic regression\nWhich algorithm do you want to use?(1-3) "))
 
     # Load data section
     start_time_load = time.time()
@@ -140,7 +169,12 @@ def main():
     start_time_alg = time.time()
     
     algorithms = Algorithms(comments, labels, vocabulary)
-    algorithm_accuracy, label = algorithms.logistic_regression()
+    if algorithm_to_use == 1:
+        algorithm_accuracy, label = algorithms.naive_bayes()
+    elif algorithm_to_use == 2:
+        algorithm_accuracy, label = algorithms.SVM()
+    else:
+        algorithm_accuracy, label = algorithms.logistic_regression()
 
     end_time_alg = time.time()
     # Move on line up the cursor
@@ -150,6 +184,17 @@ def main():
     sys.stdout.write("\033[K")
     print(f"\n {label}: {algorithm_accuracy}")
 
+    # User input section
+    print()
+    while True:
+        try:
+            user_input = input("\nSentence: ")
+        except KeyboardInterrupt:
+            sys.exit("\nSession terminated")
+
+        user_interface = UserInterface(user_input, vocabulary, comments, labels, algorithm_to_use)
+        predicted = user_interface.prediction()
+        print(f"> Sentiment {predicted}")
 
 def load_data(data, file_to_load):
     """
@@ -159,7 +204,7 @@ def load_data(data, file_to_load):
     DATA USED: EcoPrepocessed.csv (eco review on amazon)    
     """
     if os.path.exists(f"{data}/{file_to_load}"):
-        print("Load data > Loading...", end="", flush=True)
+        print("\nLoad data > Loading...", end="", flush=True)
 
         comments = ()
         label = ()
@@ -169,7 +214,6 @@ def load_data(data, file_to_load):
             for row in reader:
                 comments = comments + (row["review"],)
                 label = label + (row["division"],)
-
 
             return (comments, label)
     else:
@@ -181,7 +225,6 @@ def bag_of_words(comments, vocabulary):
     Algorithm used for feature extraction of comments
     Algorithm used: BoW (Bag of Words)
     """
-    print("\r  Feature processing > Loading...", end="", flush=True)
     vocabulary = vocabulary
 
     feature_matrix = []
