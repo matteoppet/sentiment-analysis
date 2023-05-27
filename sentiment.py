@@ -80,38 +80,35 @@ class Algorithms:
         label_encoder = LabelEncoder()
         self.labels = label_encoder.fit_transform(labels)
         self.train_X, self.test_X, self.train_y, self.test_y = train_test_split(self.comments, self.labels, test_size=0.2, random_state=42)
+        
+        self.train_x_vec = bag_of_words(self.train_X, self.vocabulary)
+        self.test_x_vec = bag_of_words(self.test_X, self.vocabulary)
 
     def naive_bayes(self):        
         classifier = MultinomialNB()
-        classifier.fit(self.train_X, self.train_y)
+        classifier.fit(self.train_x_vec, self.train_y)
 
         # Make prediction on the test set
-        predictions = classifier.predict(self.test_X)
+        predictions = classifier.predict(self.test_x_vec)
 
         # Calculate accuracy of the classifier
         accuracy = accuracy_score(self.test_y, predictions)
         return (accuracy, "Naive Bayes")
 
     def SVM(self):        
-        train_x_vec = bag_of_words(self.train_X, self.vocabulary)
-        test_x_vec = bag_of_words(self.test_X, self.vocabulary)
-        
         classifier = SVC(kernel='sigmoid')
-        classifier.fit(train_x_vec, self.train_y)
+        classifier.fit(self.train_x_vec, self.train_y)
 
-        predictions = classifier.predict(test_x_vec)
+        predictions = classifier.predict(self.test_x_vec)
 
         accuracy = accuracy_score(self.test_y, predictions)
         return (accuracy, "Support Vectors Machine")
 
     def logistic_regression(self):
-        train_x_vec = bag_of_words(self.train_X, self.vocabulary)
-        test_x_vec = bag_of_words(self.test_X, self.vocabulary)
-
         model = LogisticRegression(solver='liblinear')
-        model.fit(train_x_vec, self.train_y)
+        model.fit(self.train_x_vec, self.train_y)
 
-        y_pred = model.predict(test_x_vec)
+        y_pred = model.predict(self.test_x_vec)
 
         accuracy = accuracy_score(self.test_y, y_pred)
         return (accuracy, "Logistic Regression")
@@ -130,7 +127,7 @@ class UserInterface:
 
         # Predict sentiment
         if self.algorithm_to_use == 1:
-            model = MultinomialNB
+            model = MultinomialNB()
         elif self.algorithm_to_use == 2:
             model = SVC(kernel='sigmoid')
         else:
