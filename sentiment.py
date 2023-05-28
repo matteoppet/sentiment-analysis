@@ -56,6 +56,7 @@ import time
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
+import nltk
 
 # Naive bayes
 from sklearn.naive_bayes import MultinomialNB
@@ -154,9 +155,12 @@ def main():
 
     # Create a vocabulary
     vocabulary = set()
+    stopwords = nltk.corpus.stopwords.words("english")
     for comment in comments:
-        words = comment.split(" ")
-        vocabulary.update(words)
+        words = nltk.word_tokenize(comment)
+        for word in words:
+            if word not in stopwords:
+                vocabulary.update(words)
     vocabulary = sorted(vocabulary)
     
     # Algorithm sections
@@ -223,7 +227,7 @@ def bag_of_words(comments, vocabulary):
 
     feature_matrix = []
     for document in comments:
-        words = document.split(" ")
+        words = nltk.word_tokenize(document)
         document_vector = [0] * len(vocabulary)
         
         for word in words:
