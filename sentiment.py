@@ -160,6 +160,8 @@ def main():
     print(f"\rLoad data > OK, runtime: {end_time_load - start_time_load}")
 
     # Create a vocabulary
+    print("\rVocabulary creation > Loading...", end="", flush=True)
+    start_time_vocabulary = time.time()
     vocabulary = set()
     stopwords = nltk.corpus.stopwords.words("english")
     for comment in comments:
@@ -168,6 +170,8 @@ def main():
             if word not in stopwords:
                 vocabulary.update(words)
     vocabulary = sorted(vocabulary)
+    end_time_vocabulary = time.time()
+    print(f"\rVocabulary creation > OK, runtime: {end_time_vocabulary - start_time_vocabulary}")
     
     # Algorithm sections
     start_time_alg = time.time()
