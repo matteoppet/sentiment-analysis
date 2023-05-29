@@ -145,7 +145,13 @@ def main():
     except ValueError:
         sys.exit("Usage: python sentiment.py data/file")
 
-    algorithm_to_use = int(input("1) Naive bayes\n2) Support Vectore Machine\n3) Logistic regression\nWhich algorithm do you want to use?(1-3) "))
+    try:
+        algorithm_to_use = int(input("1) Naive bayes\n2) Support Vectore Machine\n3) Logistic regression\nWhich algorithm do you want to use?(1-3) "))
+    except ValueError:
+        sys.exit("\nError: You must choose one of three options with the corresponding number")
+
+    if algorithm_to_use not in [1, 2, 3]:
+        sys.exit("\nError: No options match the number you entered")
 
     # Load data section
     start_time_load = time.time()
@@ -210,8 +216,8 @@ def load_data(data, file_to_load):
             reader = csv.DictReader(csvfile)
 
             for row in reader:
-                comments = comments + (row["review"],)
-                label = label + (row["division"],)
+                comments = comments + (row["Review Text"],)
+                label = label + (row["Rating"],)
 
             return (comments, label)
     else:
