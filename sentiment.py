@@ -149,13 +149,7 @@ class UserInterface:
     def prediction(self):
         preprocessed_input = bag_of_words([self.user_input], self.vocabulary)
 
-        # Predict sentiment
-        if self.algorithm_to_use == 1:
-            model = MultinomialNB()
-        elif self.algorithm_to_use == 2:
-            model = SVC(kernel='sigmoid')
-        elif self.algorithm_to_use == 3:
-            model = LogisticRegression(solver='newton-cholesky', max_iter=10000)
+        model = LogisticRegression(solver='newton-cholesky', max_iter=10000)
 
         model.fit(bag_of_words(self.comments, self.vocabulary), self.labels)
         prediction = model.predict(preprocessed_input)
@@ -197,11 +191,11 @@ def main():
         sys.exit("No such file or directory, check the path or the file name")
     
     try:
-        algorithm_to_use = int(input("1) Naive bayes\n2) Support Vectore Machine\n3) Logistic regression\nSequential Neural Network\nWhich algorithm do you want to use?(1-4) "))
+        algorithm_to_use = int(input("\n1) Logistic regression\n2)Sequential Neural Network\nWhich algorithm do you want to use?(1-4) "))
     except ValueError:
         sys.exit("\nError: You must choose one of three options with the corresponding number")
 
-    if algorithm_to_use not in [1, 2, 3, 4]:
+    if algorithm_to_use not in [1, 2]:
         sys.exit("\nError: No options match the number you entered")
 
 
@@ -226,10 +220,6 @@ def main():
     
     algorithms = Algorithms(comments, labels, vocabulary)
     if algorithm_to_use == 1:
-        algorithm_accuracy, label = algorithms.naive_bayes()
-    elif algorithm_to_use == 2:
-        algorithm_accuracy, label = algorithms.SVM()
-    elif algorithm_to_use == 3:
         algorithm_accuracy, label = algorithms.logistic_regression()
     else:
         algorithm_accuracy, label = algorithms.Sequential_NN()
@@ -250,7 +240,7 @@ def main():
             sys.exit("\nSession terminated")
 
         user_interface = UserInterface(user_input, vocabulary, comments, labels, algorithm_to_use)
-        if algorithm_to_use == 4:
+        if algorithm_to_use == 2:
             predicted = user_interface.prediction_neural_network()
         else:
             predicted = user_interface.prediction()
