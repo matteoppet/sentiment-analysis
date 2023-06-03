@@ -57,6 +57,9 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 import nltk
+import multiprocessing
+from string import punctuation
+import sklearn
 
 # Naive bayes
 from sklearn.naive_bayes import MultinomialNB
@@ -65,6 +68,10 @@ from sklearn.svm import SVC
 # Logistic regression
 from sklearn.linear_model import LogisticRegression
 
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from keras.models import Sequential, load_model
+from keras.layers import Embedding, Flatten, Dense, Dropout
+from keras.preprocessing.text import Tokenizer
 
 class Algorithms:
     def __init__(self, comments, labels, vocabulary):
@@ -77,39 +84,58 @@ class Algorithms:
         # Split data
         label_encoder = LabelEncoder()
         self.labels = label_encoder.fit_transform(labels)
-        self.train_X, self.test_X, self.train_y, self.test_y = train_test_split(self.comments, self.labels, test_size=0.2, random_state=42)
+        self.train_X, self.test_X, self.train_y, self.test_y = train_test_split(self.comments, self.labels, test_size=0.4, random_state=42)
         
         self.train_x_vec = bag_of_words(self.train_X, self.vocabulary)
         self.test_x_vec = bag_of_words(self.test_X, self.vocabulary)
 
-    def naive_bayes(self):        
-        classifier = MultinomialNB()
-        classifier.fit(self.train_x_vec, self.train_y)
-
-        # Make prediction on the test set
-        predictions = classifier.predict(self.test_x_vec)
-
-        # Calculate accuracy of the classifier
-        accuracy = accuracy_score(self.test_y, predictions)
-        return (accuracy, "Naive Bayes")
-
-    def SVM(self):        
-        classifier = SVC(kernel='sigmoid')
-        classifier.fit(self.train_x_vec, self.train_y)
-
-        predictions = classifier.predict(self.test_x_vec)
-
-        accuracy = accuracy_score(self.test_y, predictions)
-        return (accuracy, "Support Vectors Machine")
+        # self.train_x_vec = sklearn.preprocessing.scale(self.train_x_vec)
+        # self.test_x_vec = sklearn.preprocessing.scale(self.test_x_vec)
 
     def logistic_regression(self):
-        model = LogisticRegression(solver='liblinear')
+        model = LogisticRegression(solver='newton-cholesky', max_iter=10000)
         model.fit(self.train_x_vec, self.train_y)
 
         y_pred = model.predict(self.test_x_vec)
 
         accuracy = accuracy_score(self.test_y, y_pred)
+
         return (accuracy, "Logistic Regression")
+
+    def Sequential_NN(self):
+        # Tokenize the text and convert it into sequences
+        tokenizer = Tokenizer(num_words=10000)
+        tokenizer.fit_on_texts(self.train_X)
+        X_train_seq = tokenizer.texts_to_sequences(self.train_X)
+        X_test_seq = tokenizer.texts_to_sequences(self.test_X)
+
+        # Pad sequences to ensure equal length
+        X_train_pad = pad_sequences(X_train_seq, maxlen=100)
+        X_test_pad = pad_sequences(X_test_seq, maxlen=100)
+
+        # Create a simple neural network model
+        model = Sequential()
+        model.add(Embedding(10000, 100, input_length=100))
+        model.add(Flatten())
+        model.add(Dense(64, activation='relu'))
+        model.add(Dropout(0.25)),
+        model.add(Dense(32, activation='relu'))
+        model.add(Dropout(0.25))
+        model.add(Dense(1, activation='sigmoid'))
+
+        # Compile the model
+        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+
+        # Train the model
+        model.fit(X_train_pad, self.train_y, epochs=10, batch_size=32)
+
+        # Evaluate the model on the test set
+        loss, accuracy = model.evaluate(X_test_pad, self.test_y)
+
+        # Save the trained model
+        model.save('sentiment_model.h5')
+
+        return (accuracy, "Sequential Neural Network")
 
 
 class UserInterface:
@@ -128,13 +154,35 @@ class UserInterface:
             model = MultinomialNB()
         elif self.algorithm_to_use == 2:
             model = SVC(kernel='sigmoid')
-        else:
-            model = LogisticRegression(solver='liblinear')
+        elif self.algorithm_to_use == 3:
+            model = LogisticRegression(solver='newton-cholesky', max_iter=10000)
 
         model.fit(bag_of_words(self.comments, self.vocabulary), self.labels)
         prediction = model.predict(preprocessed_input)
 
         return prediction[0]
+
+    def prediction_neural_network(self):
+        # Load the trained model
+        model = load_model('sentiment_model.h5')
+
+        # Preprocess the user input
+        preprocessed_input = bag_of_words([self.user_input], self.vocabulary)  # Replace 'preprocess' with your own preprocessing function
+
+        # Convert preprocessed input into sequences
+        input_seq = Tokenizer.texts_to_sequences(preprocessed_input)
+
+        # Pad the sequence
+        input_pad = pad_sequences(input_seq, maxlen=100)
+
+        # Make prediction
+        prediction = model.predict(input_pad)
+
+        # Interpret the prediction
+        sentiment = "Positive" if prediction[0] >= 0.5 else "Negative"
+
+        return sentiment
+
 
 def main():
     if len(sys.argv) != 2:
@@ -145,31 +193,31 @@ def main():
     except ValueError:
         sys.exit("Usage: python sentiment.py data/file")
 
+    if not os.path.exists(f"{dir}/{file}"):
+        sys.exit("No such file or directory, check the path or the file name")
+    
     try:
-        algorithm_to_use = int(input("1) Naive bayes\n2) Support Vectore Machine\n3) Logistic regression\nWhich algorithm do you want to use?(1-3) "))
+        algorithm_to_use = int(input("1) Naive bayes\n2) Support Vectore Machine\n3) Logistic regression\nSequential Neural Network\nWhich algorithm do you want to use?(1-4) "))
     except ValueError:
         sys.exit("\nError: You must choose one of three options with the corresponding number")
 
-    if algorithm_to_use not in [1, 2, 3]:
+    if algorithm_to_use not in [1, 2, 3, 4]:
         sys.exit("\nError: No options match the number you entered")
+
 
     # Load data section
     start_time_load = time.time()
     comments, labels = load_data(dir, file)
     end_time_load = time.time()
+    print()
     print(f"\rLoad data > OK, runtime: {end_time_load - start_time_load}")
 
     # Create a vocabulary
     print("\rVocabulary creation > Loading...", end="", flush=True)
     start_time_vocabulary = time.time()
-    vocabulary = set()
-    stopwords = nltk.corpus.stopwords.words("english")
-    for comment in comments:
-        words = nltk.word_tokenize(comment)
-        for word in words:
-            if word not in stopwords:
-                vocabulary.update(words)
-    vocabulary = sorted(vocabulary)
+
+    vocabulary = creation_vocabulary(comments)
+
     end_time_vocabulary = time.time()
     print(f"\rVocabulary creation > OK, runtime: {end_time_vocabulary - start_time_vocabulary}")
     
@@ -181,8 +229,10 @@ def main():
         algorithm_accuracy, label = algorithms.naive_bayes()
     elif algorithm_to_use == 2:
         algorithm_accuracy, label = algorithms.SVM()
-    else:
+    elif algorithm_to_use == 3:
         algorithm_accuracy, label = algorithms.logistic_regression()
+    else:
+        algorithm_accuracy, label = algorithms.Sequential_NN()
 
     end_time_alg = time.time()
     # Move on line up the cursor
@@ -193,16 +243,20 @@ def main():
     print(f"\n {label}: {algorithm_accuracy}")
 
     # User input section
-    print()
     while True:
         try:
-            user_input = input("\nSentence: ")
+            user_input = input("\n\nSentence: ").lower()
         except KeyboardInterrupt:
             sys.exit("\nSession terminated")
 
         user_interface = UserInterface(user_input, vocabulary, comments, labels, algorithm_to_use)
-        predicted = user_interface.prediction()
+        if algorithm_to_use == 4:
+            predicted = user_interface.prediction_neural_network()
+        else:
+            predicted = user_interface.prediction()
+
         print(f"> Sentiment {predicted}")
+
 
 def load_data(data, file_to_load):
     """
@@ -211,45 +265,65 @@ def load_data(data, file_to_load):
     DATA ALREADY CLEANED
     DATA USED: EcoPrepocessed.csv (eco review on amazon)    
     """
-    if os.path.exists(f"{data}/{file_to_load}"):
-        print("\nLoad data > Loading...", end="", flush=True)
+    comments = ()
+    label = ()
+    with open(f"{data}/{file_to_load}") as csvfile:
+        reader = csv.DictReader(csvfile)
 
-        comments = ()
-        label = ()
-        with open(f"{data}/{file_to_load}") as csvfile:
-            reader = csv.DictReader(csvfile)
+        for row in reader:
+            comments = comments + (row["review"],)
+            label = label + (row["sentiment"],)
 
-            for row in reader:
-                comments = comments + (row["Review Text"],)
-                label = label + (row["Rating"],)
+        return (comments, label)
 
-            return (comments, label)
-    else:
-        sys.exit("No such file or directory, check the path or the file name")
+
+def creation_vocabulary(comments):
+    vocabulary = set()
+    stopwords = nltk.corpus.stopwords.words("english")
+
+    for comment in comments:
+        words = nltk.word_tokenize(comment.lower())
+        for word in words:
+            if word not in stopwords:
+
+                for letter in word:
+                    if letter in punctuation:
+                        word = word.replace(letter, "")
+
+                vocabulary.update(word)
+    return sorted(vocabulary)
+
+
+def extract_features(document, vocabulary):
+    words = nltk.word_tokenize(document.lower())
+    document_vector = np.zeros(len(vocabulary))
+
+    for word in words:
+        if word in vocabulary:
+            word_index = vocabulary.index(word)
+            document_vector[word_index] += 1
+
+    return document_vector
 
 
 def bag_of_words(comments, vocabulary):
     """
-    Algorithm used for feature extraction of comments
-    Algorithm used: BoW (Bag of Words)
+    Algorithm used for feature extraction of comments: BoW
+
+    Using multiprocessing for faster process
     """
-    vocabulary = vocabulary
+    # Create a multiprocessing pool
+    pool = multiprocessing.Pool()
 
-    feature_matrix = []
-    for document in comments:
-        words = nltk.word_tokenize(document)
-        document_vector = [0] * len(vocabulary)
-        
-        for word in words:
-            if word in vocabulary:
-                word_index = vocabulary.index(word)
-                document_vector[word_index] += 1
+    # Use the pool to parallelize the feature extraction
+    feature_matrix = pool.starmap(extract_features, [(document, vocabulary) for document in comments])
 
-        feature_matrix.append(document_vector)
-    
+    # Close the pool to release resources
+    pool.close()
+    pool.join()
+
     feature_matrix = np.array(feature_matrix)
     return feature_matrix
-
 
 if __name__ == "__main__":
     main() 

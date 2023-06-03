@@ -17,4 +17,4 @@ pip install -r requirements.txt
 ```bash
 python sentiment.py data/EcoPreprocessed.csv
 ```
-> own data not supported yet.
+> Own data not supported yet.
