@@ -61,17 +61,14 @@ import multiprocessing
 from string import punctuation
 import sklearn
 
-# Naive bayes
-from sklearn.naive_bayes import MultinomialNB
-# SVC
-from sklearn.svm import SVC
 # Logistic regression
 from sklearn.linear_model import LogisticRegression
 
-from tensorflow.keras.preprocessing.sequence import pad_sequences
+from keras.utils import pad_sequences
 from keras.models import Sequential, load_model
 from keras.layers import Embedding, Flatten, Dense, Dropout
 from keras.preprocessing.text import Tokenizer
+
 
 class Algorithms:
     def __init__(self, comments, labels, vocabulary):
@@ -118,7 +115,7 @@ class Algorithms:
         model.add(Embedding(10000, 100, input_length=100))
         model.add(Flatten())
         model.add(Dense(64, activation='relu'))
-        model.add(Dropout(0.25)),
+        model.add(Dropout(0.5)),
         model.add(Dense(32, activation='relu'))
         model.add(Dropout(0.25))
         model.add(Dense(1, activation='sigmoid'))
@@ -139,14 +136,23 @@ class Algorithms:
 
 
 class UserInterface:
-    def __init__(self, user_input, vocabulary, comments, labels, algorithm_to_use):
-        self.user_input = user_input 
+    def __init__(self, vocabulary=None, comments=None, labels=None):
         self.vocabulary = vocabulary
         self.comments = comments
         self.labels = labels
-        self.algorithm_to_use = algorithm_to_use
 
-    def prediction(self):
+    def interface(self, algorithm_to_use):
+        try:
+            self.user_input = input("\n\nSentence: ").lower()
+        except KeyboardInterrupt:
+            sys.exit("\nSession terminated")
+
+        if algorithm_to_use == 2:
+            print(f"> Sentiment {self.prediction_neural_network()}")
+        elif algorithm_to_use == 1:
+            print(f"> Sentiment {self.prediction_logistic_regression()}")
+
+    def prediction_logistic_regression(self):
         preprocessed_input = bag_of_words([self.user_input], self.vocabulary)
 
         model = LogisticRegression(solver='newton-cholesky', max_iter=10000)
@@ -156,15 +162,32 @@ class UserInterface:
 
         return prediction[0]
 
+    def preprocess_text(self, text):
+        stopwords = nltk.corpus.stopwords.words("english")
+        text = text  
+
+        for word in text:
+            
+            if word in stopwords:
+                text.replace(word, "")
+
+            for letter in word:
+                if letter in punctuation:
+                    letter = letter.replace(letter, "")
+        return text
+
     def prediction_neural_network(self):
         # Load the trained model
         model = load_model('sentiment_model.h5')
 
         # Preprocess the user input
-        preprocessed_input = bag_of_words([self.user_input], self.vocabulary)  # Replace 'preprocess' with your own preprocessing function
+        preprocessed_input = self.preprocess_text(self.user_input)
 
         # Convert preprocessed input into sequences
-        input_seq = Tokenizer.texts_to_sequences(preprocessed_input)
+        texts = [preprocessed_input]
+        tokenizer = Tokenizer()
+        tokenizer.fit_on_texts(texts)
+        input_seq = tokenizer.texts_to_sequences(texts)
 
         # Pad the sequence
         input_pad = pad_sequences(input_seq, maxlen=100)
@@ -191,12 +214,16 @@ def main():
         sys.exit("No such file or directory, check the path or the file name")
     
     try:
-        algorithm_to_use = int(input("\n1) Logistic regression\n2)Sequential Neural Network\nWhich algorithm do you want to use?(1-4) "))
+        algorithm_to_use = int(input("1) Logistic regression\n2) Sequential Neural Network\nWhich algorithm do you want to use?(1-2) "))
     except ValueError:
         sys.exit("\nError: You must choose one of three options with the corresponding number")
 
     if algorithm_to_use not in [1, 2]:
         sys.exit("\nError: No options match the number you entered")
+    elif algorithm_to_use == 2 and os.path.exists("sentiment_model.h5"):
+        while True:
+            user_interface = UserInterface()
+            user_interface.interface(algorithm_to_use)
 
 
     # Load data section
@@ -231,21 +258,10 @@ def main():
     # Clean the line
     sys.stdout.write("\033[K")
     print(f"\n {label}: {algorithm_accuracy}")
-
-    # User input section
+    
     while True:
-        try:
-            user_input = input("\n\nSentence: ").lower()
-        except KeyboardInterrupt:
-            sys.exit("\nSession terminated")
-
-        user_interface = UserInterface(user_input, vocabulary, comments, labels, algorithm_to_use)
-        if algorithm_to_use == 2:
-            predicted = user_interface.prediction_neural_network()
-        else:
-            predicted = user_interface.prediction()
-
-        print(f"> Sentiment {predicted}")
+        user_interface = UserInterface(vocabulary, comments, labels)
+        user_interface.interface(algorithm_to_use)
 
 
 def load_data(data, file_to_load):
