@@ -68,6 +68,7 @@ from keras.utils import pad_sequences
 from keras.models import Sequential, load_model
 from keras.layers import Embedding, Flatten, Dense, Dropout
 from keras.preprocessing.text import Tokenizer
+from keras.callbacks import EarlyStopping
 
 
 class Algorithms:
@@ -85,9 +86,6 @@ class Algorithms:
         
         self.train_x_vec = bag_of_words(self.train_X, self.vocabulary)
         self.test_x_vec = bag_of_words(self.test_X, self.vocabulary)
-
-        # self.train_x_vec = sklearn.preprocessing.scale(self.train_x_vec)
-        # self.test_x_vec = sklearn.preprocessing.scale(self.test_x_vec)
 
     def logistic_regression(self):
         model = LogisticRegression(solver='newton-cholesky', max_iter=10000)
@@ -110,21 +108,23 @@ class Algorithms:
         X_train_pad = pad_sequences(X_train_seq, maxlen=100)
         X_test_pad = pad_sequences(X_test_seq, maxlen=100)
 
+        callback = EarlyStopping(monitor='loss', patience=3)
+
         # Create a simple neural network model
         model = Sequential()
         model.add(Embedding(10000, 100, input_length=100))
         model.add(Flatten())
-        model.add(Dense(64, activation='relu'))
-        model.add(Dropout(0.5)),
-        model.add(Dense(32, activation='relu'))
-        model.add(Dropout(0.25))
+        model.add(Dense(30, activation='relu'))
+        model.add(Dropout(0.4)),
+        model.add(Dense(30, activation='relu'))
+        model.add(Dropout(0.3))
         model.add(Dense(1, activation='sigmoid'))
 
         # Compile the model
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
         # Train the model
-        model.fit(X_train_pad, self.train_y, epochs=10, batch_size=32)
+        model.fit(X_train_pad, self.train_y, epochs=10, batch_size=40, callbacks=callback)
 
         # Evaluate the model on the test set
         loss, accuracy = model.evaluate(X_test_pad, self.test_y)
@@ -164,17 +164,20 @@ class UserInterface:
 
     def preprocess_text(self, text):
         stopwords = nltk.corpus.stopwords.words("english")
-        text = text  
+        words = nltk.tokenize.word_tokenize(text)
+        ps = nltk.stem.PorterStemmer()
 
-        for word in text:
-            
-            if word in stopwords:
-                text.replace(word, "")
+        filtered_words = []
+        for word in words:
+            if word not in stopwords:
+                filtered_words.append(word)
 
-            for letter in word:
-                if letter in punctuation:
-                    letter = letter.replace(letter, "")
-        return text
+        stemmed_words = [ps.stem(word) for word in filtered_words]
+        no_punctuation_words = [word for word in stemmed_words if word not in punctuation]
+        
+        preprocessed_text = ' '.join(no_punctuation_words)
+        return preprocessed_text
+
 
     def prediction_neural_network(self):
         # Load the trained model
@@ -273,6 +276,7 @@ def load_data(data, file_to_load):
     """
     comments = ()
     label = ()
+
     with open(f"{data}/{file_to_load}") as csvfile:
         reader = csv.DictReader(csvfile)
 
@@ -286,30 +290,33 @@ def load_data(data, file_to_load):
 def creation_vocabulary(comments):
     vocabulary = set()
     stopwords = nltk.corpus.stopwords.words("english")
+    ps = nltk.stem.PorterStemmer()
 
     for comment in comments:
         words = nltk.word_tokenize(comment.lower())
         for word in words:
             if word not in stopwords:
 
-                for letter in word:
-                    if letter in punctuation:
-                        word = word.replace(letter, "")
+                if word not in punctuation:
+                    word = ps.stem(word)
 
-                vocabulary.update(word)
+                    vocabulary.update(word)
     return sorted(vocabulary)
 
 
 def extract_features(document, vocabulary):
     words = nltk.word_tokenize(document.lower())
     document_vector = np.zeros(len(vocabulary))
+    ps = nltk.stem.PorterStemmer()
 
     for word in words:
+        word = ps.stem(word)
         if word in vocabulary:
             word_index = vocabulary.index(word)
             document_vector[word_index] += 1
 
     return document_vector
+
 
 
 def bag_of_words(comments, vocabulary):
