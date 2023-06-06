@@ -1,3 +1,4 @@
 nltk
-csv
 numpy
+scikit-learn
+tensorflow
