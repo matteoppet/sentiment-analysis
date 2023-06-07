@@ -20,6 +20,6 @@ pip install -r requirements.txt
 ```bash
 python sentiment.py data/<.csv file>
 ```
-Replace <.csv file> with the name of your or existing dataset.
+Replace <.csv file> with the name of the dataset.
 
 > Own data not supported yet.
