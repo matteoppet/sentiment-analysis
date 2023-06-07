@@ -18,6 +18,6 @@ pip install -r requirements.txt
 
 ## Run with the following command
 ```bash
-python sentiment.py data/EcoPreprocessed.csv
+python sentiment.py data/<.csv file>
 ```
 > Own data not supported yet.
