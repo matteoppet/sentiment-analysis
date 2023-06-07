@@ -1,7 +1,10 @@
 # Sentiment analysis
 This sentiment analysis program is an AI that can recognize if your comment is positive, negative or neutral.
-This program is also implemented with three different algorithms that you can choose when running it:
-Naive Bayes, Support Vector Machine and Logistic Regression (this algorithm provides 86% accuracy with current data, it is the fastest and most accurate of the three algorithms).
+This program is also implemented with two different algorithms that you can choose when running it:
+Logistic Regression and Sequential Neural Network. 
+The neural network model is already saved, it will be updated in case of changes but in any case, if the program does not find the model, the neural network will be trained and it will take a few minutes before you can enter your comment, if it already exists you will be redirected directly to the request for comment
+
+> The "sentiment_model.h5" model file must be at the same level as the "sentiment.py" file
 
 ## Demo
 Demo incoming...

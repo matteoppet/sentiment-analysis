@@ -7,23 +7,29 @@ import os
 import csv
 import time
 
-# Algorithms
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 import nltk
 import multiprocessing
 from string import punctuation
-import sklearn
 
 # Logistic regression
 from sklearn.linear_model import LogisticRegression
 
+# Sequential neural network
 from keras.utils import pad_sequences
 from keras.models import Sequential, load_model
 from keras.layers import Embedding, Flatten, Dense, Dropout
 from keras.preprocessing.text import Tokenizer
 from keras.callbacks import EarlyStopping
+
+# Installation of module from nltk
+nltk.download('stopwords')
+nltk.download('punkt')
+
+
+PS = nltk.stem.PorterStemmer()
 
 
 class Algorithms:
@@ -106,6 +112,21 @@ class UserInterface:
             print(f"> Sentiment {self.prediction_neural_network()}")
         elif algorithm_to_use == 1:
             print(f"> Sentiment {self.prediction_logistic_regression()}")
+    
+    def preprocess_text(self, text):
+        stopwords = nltk.corpus.stopwords.words("english")
+        words = nltk.tokenize.word_tokenize(text)
+
+        filtered_words = []
+        for word in words:
+            if word not in stopwords:
+                filtered_words.append(word)
+
+        stemmed_words = [PS.stem(word) for word in filtered_words]
+        no_punctuation_words = [word for word in stemmed_words if word not in punctuation]
+        
+        preprocessed_text = ' '.join(no_punctuation_words)
+        return preprocessed_text
 
     def prediction_logistic_regression(self):
         preprocessed_input = bag_of_words([self.user_input], self.vocabulary)
@@ -116,22 +137,6 @@ class UserInterface:
         prediction = model.predict(preprocessed_input)
 
         return prediction[0]
-
-    def preprocess_text(self, text):
-        stopwords = nltk.corpus.stopwords.words("english")
-        words = nltk.tokenize.word_tokenize(text)
-        ps = nltk.stem.PorterStemmer()
-
-        filtered_words = []
-        for word in words:
-            if word not in stopwords:
-                filtered_words.append(word)
-
-        stemmed_words = [ps.stem(word) for word in filtered_words]
-        no_punctuation_words = [word for word in stemmed_words if word not in punctuation]
-        
-        preprocessed_text = ' '.join(no_punctuation_words)
-        return preprocessed_text
 
     def prediction_neural_network(self):
         # Load the trained model
@@ -161,17 +166,8 @@ class UserInterface:
 
 
 def main():
-    if len(sys.argv) != 2:
-        sys.exit("Usage: python sentiment.py data/file")
-    
-    try:
-        dir, file = sys.argv[1].split("/")
-    except ValueError:
-        sys.exit("Usage: python sentiment.py data/file")
+    dir, file = check_errors()
 
-    if not os.path.exists(f"{dir}/{file}"):
-        sys.exit("No such file or directory, check the path or the file name")
-    
     try:
         algorithm_to_use = int(input("1) Logistic regression\n2) Sequential Neural Network\nWhich algorithm do you want to use?(1-2) "))
     except ValueError:
@@ -223,12 +219,24 @@ def main():
         user_interface.interface(algorithm_to_use)
 
 
+def check_errors():
+    if len(sys.argv) != 2:
+        sys.exit("Usage: python sentiment.py data/file")
+    
+    try:
+        dir, file = sys.argv[1].split("/")
+    except ValueError:
+        sys.exit("Usage: python sentiment.py data/file")
+
+    if not os.path.exists(f"{dir}/{file}"):
+        sys.exit("No such file or directory, check the path or the file name")
+
+    return (dir, file)
+
+
 def load_data(data, file_to_load):
     """
-    Load the data from the directory data
-    
-    DATA ALREADY CLEANED
-    DATA USED: EcoPrepocessed.csv (eco review on amazon)    
+    Load the data from the directory data    
     """
     comments = ()
     label = ()
@@ -246,7 +254,6 @@ def load_data(data, file_to_load):
 def creation_vocabulary(comments):
     vocabulary = set()
     stopwords = nltk.corpus.stopwords.words("english")
-    ps = nltk.stem.PorterStemmer()
 
     for comment in comments:
         words = nltk.word_tokenize(comment.lower())
@@ -254,7 +261,7 @@ def creation_vocabulary(comments):
             if word not in stopwords:
 
                 if word not in punctuation:
-                    word = ps.stem(word)
+                    word = PS.stem(word)
 
                     vocabulary.update(word)
     return sorted(vocabulary)
@@ -263,10 +270,9 @@ def creation_vocabulary(comments):
 def extract_features(document, vocabulary):
     words = nltk.word_tokenize(document.lower())
     document_vector = np.zeros(len(vocabulary))
-    ps = nltk.stem.PorterStemmer()
 
     for word in words:
-        word = ps.stem(word)
+        word = PS.stem(word)
         if word in vocabulary:
             word_index = vocabulary.index(word)
             document_vector[word_index] += 1
@@ -292,6 +298,7 @@ def bag_of_words(comments, vocabulary):
 
     feature_matrix = np.array(feature_matrix)
     return feature_matrix
+
 
 if __name__ == "__main__":
     main() 
