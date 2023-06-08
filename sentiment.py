@@ -18,6 +18,7 @@ from string import punctuation
 from sklearn.linear_model import LogisticRegression
 
 # Sequential neural network
+import tensorflow as tf
 from keras.utils import pad_sequences
 from keras.models import Sequential, load_model
 from keras.layers import Embedding, Flatten, Dense, Dropout
@@ -138,9 +139,10 @@ class UserInterface:
 
         return prediction[0]
 
+    tf.function(reduce_retracing=True)
     def prediction_neural_network(self):
-        # Load the trained model
-        model = load_model('sentiment_model.h5')
+        model = load_model('sentiment_model.h5', compile=False)
+        model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
         # Preprocess the user input
         preprocessed_input = self.preprocess_text(self.user_input)
@@ -155,9 +157,7 @@ class UserInterface:
         input_pad = pad_sequences(input_seq, maxlen=100)
 
         # Make prediction
-        prediction = model.predict(input_pad)
-
-        # TODO: Check for neutral of negative or positive
+        prediction = model(input_pad)
 
         # Interpret the prediction
         sentiment = "Positive" if prediction[0] >= 0.5 else "Negative"
@@ -186,7 +186,7 @@ def main():
     comments, labels = load_data(dir, file)
     end_time_load = time.time()
     print()
-    print(f"\rLoad data > OK, runtime: {end_time_load - start_time_load}")
+    print(f"\rLoad data...OK, runtime: {end_time_load - start_time_load}")
 
     # Create a vocabulary
     print("\rVocabulary creation > Loading...", end="", flush=True)
@@ -195,7 +195,7 @@ def main():
     vocabulary = creation_vocabulary(comments)
 
     end_time_vocabulary = time.time()
-    print(f"\rVocabulary creation > OK, runtime: {end_time_vocabulary - start_time_vocabulary}")
+    print(f"\rVocabulary creation...OK, runtime: {end_time_vocabulary - start_time_vocabulary}")
     
     # Algorithm sections
     start_time_alg = time.time()
@@ -209,7 +209,7 @@ def main():
     end_time_alg = time.time()
     # Move on line up the cursor
     sys.stdout.write("\033[F")
-    print(f"\rAlgorithm process > OK, runtime: {end_time_alg - start_time_alg}")
+    print(f"\rAlgorithm process...OK, runtime: {end_time_alg - start_time_alg}")
     # Clean the line
     sys.stdout.write("\033[K")
     print(f"\n {label}: {algorithm_accuracy}")
