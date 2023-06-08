@@ -25,7 +25,7 @@ from keras.layers import Embedding, Flatten, Dense, Dropout
 from keras.preprocessing.text import Tokenizer
 from keras.callbacks import EarlyStopping
 
-# Installation of module from nltk
+# Install nltk's module
 nltk.download('stopwords')
 nltk.download('punkt')
 
@@ -41,7 +41,6 @@ class Algorithms:
         self.labels = labels
         self.vocabulary = vocabulary
 
-        # Split data
         label_encoder = LabelEncoder()
         self.labels = label_encoder.fit_transform(labels)
         self.train_X, self.test_X, self.train_y, self.test_y = train_test_split(self.comments, self.labels, test_size=0.4, random_state=42)
@@ -72,7 +71,7 @@ class Algorithms:
 
         callback = EarlyStopping(monitor='loss', patience=3)
 
-        # Create a simple neural network model
+        # Create neural network model
         model = Sequential()
         model.add(Embedding(10000, 100, input_length=100))
         model.add(Flatten())
@@ -82,16 +81,13 @@ class Algorithms:
         model.add(Dropout(0.3))
         model.add(Dense(1, activation='sigmoid'))
 
-        # Compile the model
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
         # Train the model
         model.fit(X_train_pad, self.train_y, epochs=10, batch_size=40, callbacks=callback)
 
-        # Evaluate the model on the test set
         loss, accuracy = model.evaluate(X_test_pad, self.test_y)
 
-        # Save the trained model
         model.save('sentiment_model.h5')
 
         return (accuracy, "Sequential Neural Network")
@@ -144,7 +140,6 @@ class UserInterface:
         model = load_model('sentiment_model.h5', compile=False)
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
-        # Preprocess the user input
         preprocessed_input = self.preprocess_text(self.user_input)
 
         # Convert preprocessed input into sequences
@@ -153,10 +148,8 @@ class UserInterface:
         tokenizer.fit_on_texts(texts)
         input_seq = tokenizer.texts_to_sequences(texts)
 
-        # Pad the sequence
         input_pad = pad_sequences(input_seq, maxlen=100)
 
-        # Make prediction
         prediction = model(input_pad)
 
         # Interpret the prediction
@@ -286,7 +279,6 @@ def bag_of_words(comments, vocabulary):
 
     Using multiprocessing for faster process
     """
-    # Create a multiprocessing pool
     pool = multiprocessing.Pool()
 
     # Use the pool to parallelize the feature extraction
