@@ -6,6 +6,7 @@ import sys
 import os
 import csv
 import time
+import pandas as pd
 
 from sklearn.preprocessing import LabelEncoder
 from sklearn.metrics import accuracy_score
@@ -24,10 +25,6 @@ from keras.models import Sequential, load_model
 from keras.layers import Embedding, Flatten, Dense, Dropout
 from keras.preprocessing.text import Tokenizer
 from keras.callbacks import EarlyStopping
-
-# Install nltk's module
-nltk.download('stopwords')
-nltk.download('punkt')
 
 
 PS = nltk.stem.PorterStemmer()
@@ -226,22 +223,16 @@ def check_errors():
 
     return (dir, file)
 
-
 def load_data(data, file_to_load):
     """
     Load the data from the directory data    
     """
-    comments = ()
-    label = ()
+    data = pd.read_csv(f"{data}/{file_to_load}")
 
-    with open(f"{data}/{file_to_load}") as csvfile:
-        reader = csv.DictReader(csvfile)
+    comments = tuple(data["review"].values.tolist())
+    label = tuple(data["sentiment"].values.tolist())
 
-        for row in reader:
-            comments = comments + (row["review"],)
-            label = label + (row["sentiment"],)
-
-        return (comments, label)
+    return (comments, label)
 
 
 def creation_vocabulary(comments):
