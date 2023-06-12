@@ -28,4 +28,4 @@ Replace <.csv file> with the name of the dataset.
 
 ## About Dataset
 Dataset by [Ulrik Thyge Pedersen](https://www.kaggle.com/datasets/ulrikthygepedersen/rotten-tomatoes-reviews), released under the License: [Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)
-> Some preprocessing or modifications (now or in the future) i made to the original dataset to suit the needs of our project.
+> Some preprocessing or modifications (now or in the future) i made to the original dataset to suit the needs of the project.
