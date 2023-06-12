@@ -7,7 +7,8 @@ The neural network model is already saved, it will be updated in case of changes
 > The "sentiment_model.h5" model file must be at the same level as the "sentiment.py" file
 
 ## Demo
-Demo incoming...
+![Demo photo](https://github.com/matteoppet/sentiment-analysis/photo/demo.png?raw=true)
+Algorithm used in this image: Sequential Neural Network(https://keras.io/guides/sequential_model/)
 
 ## Installation
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install all the libraries used.
