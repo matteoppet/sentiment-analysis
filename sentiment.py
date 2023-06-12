@@ -4,7 +4,6 @@ IMPORTANT: Give credit to the author of dataset (Chaithanya Kumar A Twitter and 
 import numpy as np
 import sys
 import os
-import csv
 import time
 import pandas as pd
 
@@ -40,7 +39,7 @@ class Algorithms:
 
         label_encoder = LabelEncoder()
         self.labels = label_encoder.fit_transform(labels)
-        self.train_X, self.test_X, self.train_y, self.test_y = train_test_split(self.comments, self.labels, test_size=0.4, random_state=42)
+        self.train_X, self.test_X, self.train_y, self.test_y = train_test_split(self.comments, self.labels, test_size=0.2, random_state=42)
         
         self.train_x_vec = bag_of_words(self.train_X, self.vocabulary)
         self.test_x_vec = bag_of_words(self.test_X, self.vocabulary)
@@ -72,16 +71,14 @@ class Algorithms:
         model = Sequential()
         model.add(Embedding(10000, 100, input_length=100))
         model.add(Flatten())
-        model.add(Dense(30, activation='relu'))
-        model.add(Dropout(0.4)),
-        model.add(Dense(30, activation='relu'))
-        model.add(Dropout(0.3))
+        model.add(Dense(50, activation='relu'))
+        model.add(Dropout(0.3)),
         model.add(Dense(1, activation='sigmoid'))
 
         model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
         # Train the model
-        model.fit(X_train_pad, self.train_y, epochs=10, batch_size=40, callbacks=callback)
+        model.fit(X_train_pad, self.train_y, epochs=3, batch_size=40, callbacks=callback)
 
         loss, accuracy = model.evaluate(X_test_pad, self.test_y)
 
@@ -91,21 +88,11 @@ class Algorithms:
 
 
 class UserInterface:
-    def __init__(self, vocabulary=None, comments=None, labels=None):
+    def __init__(self, user_input, vocabulary=None, comments=None, labels=None):
         self.vocabulary = vocabulary
         self.comments = comments
         self.labels = labels
-
-    def interface(self, algorithm_to_use):
-        try:
-            self.user_input = input("\n\nSentence: ").lower()
-        except KeyboardInterrupt:
-            sys.exit("\nSession terminated")
-
-        if algorithm_to_use == 2:
-            print(f"> Sentiment {self.prediction_neural_network()}")
-        elif algorithm_to_use == 1:
-            print(f"> Sentiment {self.prediction_logistic_regression()}")
+        self.user_input = user_input
     
     def preprocess_text(self, text):
         stopwords = nltk.corpus.stopwords.words("english")
@@ -114,12 +101,12 @@ class UserInterface:
         filtered_words = []
         for word in words:
             if word not in stopwords:
-                filtered_words.append(word)
+                if word not in punctuation:
+                    word = PS.stem(word)
 
-        stemmed_words = [PS.stem(word) for word in filtered_words]
-        no_punctuation_words = [word for word in stemmed_words if word not in punctuation]
+                    filtered_words.append(word)
         
-        preprocessed_text = ' '.join(no_punctuation_words)
+        preprocessed_text = ' '.join(filtered_words)
         return preprocessed_text
 
     def prediction_logistic_regression(self):
@@ -167,8 +154,14 @@ def main():
         sys.exit("\nError: No options match the number you entered")
     elif algorithm_to_use == 2 and os.path.exists("sentiment_model.h5"):
         while True:
-            user_interface = UserInterface()
-            user_interface.interface(algorithm_to_use)
+            try:
+                user_input = input("\n\nSentence: ").lower()
+            except KeyboardInterrupt:
+                sys.exit("\nSession terminated")
+
+            user_interface = UserInterface(user_input)
+            if algorithm_to_use == 2:
+                print(f"> Sentiment {user_interface.prediction_neural_network()}")
 
 
     # Load data section
@@ -205,8 +198,16 @@ def main():
     print(f"\n {label}: {algorithm_accuracy}")
     
     while True:
-        user_interface = UserInterface(vocabulary, comments, labels)
-        user_interface.interface(algorithm_to_use)
+        try:
+            user_input = input("\n\nSentence: ").lower()
+        except KeyboardInterrupt:
+            sys.exit("\nSession terminated")
+
+        user_interface = UserInterface(user_input, vocabulary, comments, labels)
+        if algorithm_to_use == 2:
+            print(f"> Sentiment {user_interface.prediction_neural_network()}")
+        elif algorithm_to_use == 1:
+            print(f"> Sentiment {user_interface.prediction_logistic_regression()}")
 
 
 def check_errors():
@@ -223,16 +224,18 @@ def check_errors():
 
     return (dir, file)
 
+
 def load_data(data, file_to_load):
     """
     Load the data from the directory data    
     """
-    data = pd.read_csv(f"{data}/{file_to_load}")
+    with open(f'{data}/{file_to_load}', 'r', encoding='utf-8', errors='ignore') as file:
+        dataset = pd.read_csv(file)
 
-    comments = tuple(data["review"].values.tolist())
-    label = tuple(data["sentiment"].values.tolist())
+    comments = tuple(dataset["Review"].values.tolist())
+    labels = tuple(dataset["Freshness"].values.tolist())
 
-    return (comments, label)
+    return (comments, labels)
 
 
 def creation_vocabulary(comments):
@@ -248,6 +251,7 @@ def creation_vocabulary(comments):
                     word = PS.stem(word)
 
                     vocabulary.update(word)
+        
     return sorted(vocabulary)
 
 
