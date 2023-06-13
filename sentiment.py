@@ -8,8 +8,8 @@ import time
 import pandas as pd
 
 from sklearn.preprocessing import LabelEncoder
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, f1_score, recall_score
+from sklearn.model_selection import train_test_split, GridSearchCV
 import nltk
 import multiprocessing
 from string import punctuation
@@ -31,8 +31,6 @@ PS = nltk.stem.PorterStemmer()
 
 class Algorithms:
     def __init__(self, comments, labels, vocabulary):
-        print("\rAlgorithm process > Loading...")
-
         self.comments = comments
         self.labels = labels
         self.vocabulary = vocabulary
@@ -45,12 +43,12 @@ class Algorithms:
         self.test_x_vec = bag_of_words(self.test_X, self.vocabulary)
 
     def logistic_regression(self):
-        model = LogisticRegression(solver='newton-cholesky', max_iter=10000)
+        model = LogisticRegression(solver="sag", max_iter=10000)
         model.fit(self.train_x_vec, self.train_y)
 
         y_pred = model.predict(self.test_x_vec)
 
-        accuracy = accuracy_score(self.test_y, y_pred)
+        accuracy = f"\n  f1_score: {f1_score(self.test_y, y_pred)}\n  accuracy_score: {accuracy_score(self.test_y, y_pred)}\n  recall_score: {recall_score(self.test_y, y_pred)}"
 
         return (accuracy, "Logistic Regression")
 
@@ -65,7 +63,7 @@ class Algorithms:
         X_train_pad = pad_sequences(X_train_seq, maxlen=100)
         X_test_pad = pad_sequences(X_test_seq, maxlen=100)
 
-        callback = EarlyStopping(monitor='loss', patience=3)
+        callback = EarlyStopping(monitor='loss', patience=2)
 
         # Create neural network model
         model = Sequential()
@@ -112,7 +110,7 @@ class UserInterface:
     def prediction_logistic_regression(self):
         preprocessed_input = bag_of_words([self.user_input], self.vocabulary)
 
-        model = LogisticRegression(solver='newton-cholesky', max_iter=10000)
+        model = LogisticRegression(solver='sag', max_iter=10000)
 
         model.fit(bag_of_words(self.comments, self.vocabulary), self.labels)
         prediction = model.predict(preprocessed_input)
@@ -165,36 +163,24 @@ def main():
 
 
     # Load data section
-    start_time_load = time.time()
+    print("\n\rLoad data...", end="", flush=True)
     comments, labels = load_data(dir, file)
-    end_time_load = time.time()
-    print()
-    print(f"\rLoad data...OK, runtime: {end_time_load - start_time_load}")
+    print(f"\rLoad data...OK")
 
     # Create a vocabulary
-    print("\rVocabulary creation > Loading...", end="", flush=True)
-    start_time_vocabulary = time.time()
-
+    print("\rVocabulary creation...", end="", flush=True)
     vocabulary = creation_vocabulary(comments)
-
-    end_time_vocabulary = time.time()
-    print(f"\rVocabulary creation...OK, runtime: {end_time_vocabulary - start_time_vocabulary}")
+    print(f"\rVocabulary creation...OK")
     
     # Algorithm sections
-    start_time_alg = time.time()
-    
+    print("\rAlgorithm process...", end="", flush=True)
     algorithms = Algorithms(comments, labels, vocabulary)
     if algorithm_to_use == 1:
         algorithm_accuracy, label = algorithms.logistic_regression()
     else:
         algorithm_accuracy, label = algorithms.Sequential_NN()
+    print(f"\rAlgorithm process...OK")
 
-    end_time_alg = time.time()
-    # Move on line up the cursor
-    sys.stdout.write("\033[F")
-    print(f"\rAlgorithm process...OK, runtime: {end_time_alg - start_time_alg}")
-    # Clean the line
-    sys.stdout.write("\033[K")
     print(f"\n {label}: {algorithm_accuracy}")
     
     while True:
@@ -283,7 +269,7 @@ def bag_of_words(comments, vocabulary):
     pool.close()
     pool.join()
 
-    feature_matrix = np.array(feature_matrix)
+    feature_matrix = [feature_matrix]
     return feature_matrix
 
 
