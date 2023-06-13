@@ -1,8 +1,7 @@
 # Sentiment analysis
-This sentiment analysis program is an AI that can recognize if your comment is positive, negative or neutral.
-This program is also implemented with two different algorithms that you can choose when running it:
-Logistic Regression and Sequential Neural Network. 
-The neural network model is already saved, it will be updated in case of changes but in any case, if the program does not find the model, the neural network will be trained and it will take a few minutes before you can enter your comment, if it already exists you will be redirected directly to the request for comment.
+This sentiment analysis program is an AI that can recognize if your comment is positive or negative. It offers two different algorithms for analysis: Logistic Regression and Sequential Neural Network.
+
+The neural network model is already saved and will be updated if changes are made. However, if the program doesn't find the model, it will train the neural network, which may take a few minutes before you can enter your comment. If the model already exists, you will be redirected directly to the comment input prompt.
 
 > The "sentiment_model.h5" model file must be at the same level as the "sentiment.py" file
 
@@ -11,7 +10,7 @@ The neural network model is already saved, it will be updated in case of changes
 Algorithm used in this image: [Sequential Neural Network](https://keras.io/guides/sequential_model/)
 
 ## Installation
-Use the package manager [pip](https://pip.pypa.io/en/stable/) to install all the libraries used.
+To use this program, install the required libraries using the package manager [pip](https://pip.pypa.io/en/stable/). Run the following command:
 
 ```bash
 pip install -r requirements.txt
@@ -21,11 +20,11 @@ pip install -r requirements.txt
 ```bash
 python sentiment.py data/<.csv file>
 ```
-Replace <.csv file> with the name of the dataset.
+Replace <.csv file> with the name of your dataset file. Please note that currently, only preexisting dataset is supported.
 
 > Own data not supported yet.
 
 
 ## About Dataset
 Dataset by [Ulrik Thyge Pedersen](https://www.kaggle.com/datasets/ulrikthygepedersen/rotten-tomatoes-reviews), released under the License: [Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)
-> Some preprocessing or modifications (now or in the future) i made to the original dataset to suit the needs of the project.
+The dataset used in this project is provided by [Ulrik Thyge Pedersen](https://www.kaggle.com/datasets/ulrikthygepedersen/rotten-tomatoes-reviews) and is released under the [Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/) license. If any preprocessing or modifications have been made to the original dataset, they are mentioned in the project.
