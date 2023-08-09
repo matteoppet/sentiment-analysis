@@ -27,3 +27,5 @@ Replace <.csv file> with the name of your dataset file. Please note that current
 
 ## About Dataset
 The dataset used in this project is provided by [Ulrik Thyge Pedersen](https://www.kaggle.com/datasets/ulrikthygepedersen/rotten-tomatoes-reviews) and is released under the [Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/) license. If any preprocessing or modifications have been made to the original dataset, they are mentioned in the project.
+
+15
